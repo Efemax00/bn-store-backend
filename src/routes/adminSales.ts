@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAdmin } from "../middleware/requireAdmin";
-import { createSaleSchema } from "../schemas/saleSchema";
+import { createSaleSchema } from "../schemas/salesSchema";
 import { createSale, listSales } from "../services/sales";
 
 export const adminSalesRouter = Router();
@@ -9,9 +9,15 @@ export const adminSalesRouter = Router();
 adminSalesRouter.get(
   "/",
   requireAdmin,
-  async (_req, res, next) => {
+  async (req, res, next) => {
     try {
-      const sales = await listSales();
+      if (!req.admin) {
+        return res.status(401).json({
+          message: "Unauthorized",
+        });
+      }
+
+      const sales = await listSales(req.admin.uid);
       res.json(sales);
     } catch (err) {
       next(err);

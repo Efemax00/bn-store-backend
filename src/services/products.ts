@@ -123,6 +123,7 @@ export async function getProduct(id: string) {
 export async function updateProduct(
   id: string,
   input: Partial<CreateProductInput>,
+  adminUid: string,
 ) {
   const ref = productsRef().child(id);
 
@@ -132,23 +133,46 @@ export async function updateProduct(
     throw new Error("Product not found.");
   }
 
-  await ref.update({
+  const product = snapshot.val() as Product;
+
+  // Only the owner can update
+  if (product.createdBy.uid !== adminUid) {
+    throw new Error("You are not allowed to update this product.");
+  }
+
+  const updatedData: Partial<Product> = {
     ...input,
     updatedAt: new Date().toISOString(),
-  });
+  };
+
+  // keep status in sync if stock changes
+  if (typeof input.stock === "number") {
+    updatedData.status = getStatus(input.stock);
+  }
+
+  await ref.update(updatedData);
 
   const updated = await ref.get();
 
   return updated.val();
 }
 
-export async function deleteProduct(id: string) {
+export async function deleteProduct(
+  id: string,
+  adminUid: string,
+) {
   const ref = productsRef().child(id);
 
   const snapshot = await ref.get();
 
   if (!snapshot.exists()) {
     throw new Error("Product not found.");
+  }
+
+  const product = snapshot.val() as Product;
+
+  if (product.createdBy.uid !== adminUid) {
+    throw new Error("You are not allowed to delete this product.");
   }
 
   await ref.remove();

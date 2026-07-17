@@ -84,13 +84,20 @@ adminProductsRouter.patch(
         )
       }
 
+      if (!req.admin) {
+        return res.status(401).json({
+          message: 'Admin session missing.',
+        })
+      }
+
       const updated = await updateProduct(
         id,
         {
           ...req.body,
           imageUrl: image.imageUrl,
           imagePath: image.imagePath,
-        }
+        },
+        req.admin.uid
       )
 
       return res.json(updated)
@@ -112,7 +119,13 @@ adminProductsRouter.delete(
         ? req.params.id[0]
         : req.params.id
 
-      await deleteProduct(id)
+      if (!req.admin) {
+        return res.status(401).json({
+          message: 'Admin session missing.',
+        })
+      }
+
+      await deleteProduct(id, req.admin.uid)
 
       return res.json({
         success: true,

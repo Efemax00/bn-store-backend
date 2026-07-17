@@ -41,7 +41,7 @@ export async function createSale(
   // Update inventory
   await updateProduct(productId, {
     stock: remainingStock,
-  });
+  }, admin.uid);
 
   const ref = salesRef().push();
 
@@ -64,16 +64,16 @@ export async function createSale(
   return sale;
 }
 
-export async function listSales() {
-  const snapshot = await salesRef().once("value");
+export async function listSales(uid: string) {
+    const snapshot = await salesRef().once("value");
 
-  const value = snapshot.val() as Record<string, Sale> | null;
+    const value = snapshot.val() as Record<string, Sale> | null;
 
-  if (!value) {
-    return [];
-  }
+    if (!value) return [];
 
-  return Object.values(value).sort((a, b) =>
-    b.soldAt.localeCompare(a.soldAt),
-  );
+    return Object.values(value)
+        .filter(sale => sale.soldBy.uid === uid)
+        .sort((a, b) =>
+            b.soldAt.localeCompare(a.soldAt)
+        );
 }
