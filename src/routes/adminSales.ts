@@ -1,10 +1,25 @@
 import { Router } from "express";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { createSaleSchema } from "../schemas/saleSchema";
-import { createSale } from "../services/sales";
+import { createSale, listSales } from "../services/sales";
 
 export const adminSalesRouter = Router();
 
+// GET all sales
+adminSalesRouter.get(
+  "/",
+  requireAdmin,
+  async (_req, res, next) => {
+    try {
+      const sales = await listSales();
+      res.json(sales);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// POST create sale
 adminSalesRouter.post(
   "/",
   requireAdmin,
@@ -21,12 +36,12 @@ adminSalesRouter.post(
       const sale = await createSale(
         input.productId,
         input.quantity,
-        req.admin,
+        req.admin
       );
 
       res.status(201).json(sale);
     } catch (err) {
       next(err);
     }
-  },
+  }
 );
