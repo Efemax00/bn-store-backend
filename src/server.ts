@@ -1,8 +1,8 @@
-import { createApp } from './app'
-import { env } from './config/env'
+import { createApp } from "./app";
+import { env } from "./config/env";
 
-const app = createApp()
+const app = createApp();
 
 app.listen(env.PORT, () => {
-  console.log(`Perfume showroom backend listening on http://localhost:${env.PORT}`)
-})
+  console.log(`🚀 B'N Backend is running on port ${env.PORT}`);
+});
