@@ -96,18 +96,16 @@ export async function createProduct(
   return product;
 }
 
-export async function listProducts() {
+export async function listProducts(adminUid: string) {
   const snapshot = await productsRef().once("value");
 
   const value = snapshot.val() as Record<string, Product> | null;
 
-  if (!value) {
-    return [];
-  }
+  if (!value) return [];
 
-  return Object.values(value).sort((a, b) =>
-    b.createdAt.localeCompare(a.createdAt),
-  );
+  return Object.values(value)
+    .filter(product => product.createdBy.uid === adminUid)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export async function getProduct(id: string) {

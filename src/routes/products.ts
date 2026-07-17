@@ -3,9 +3,10 @@ import { listProducts } from '../services/products'
 
 export const productsRouter = Router()
 
-productsRouter.get('/', async (_req, res, next) => {
+productsRouter.get('/', async (req, res, next) => {
   try {
-    const products = await listProducts()
+    const adminUid = (req as any).admin?.uid || ''
+    const products = await listProducts(adminUid)
 
     res.json({
       success: true,
