@@ -1,93 +1,109 @@
-import { Router } from 'express'
+import { Router } from "express";
 
-import { requireAdmin } from '../middleware/requireAdmin'
-import { uploadProductImage } from '../middleware/uploadProductImage'
-import { createProductSchema } from '../schemas/productSchema'
-import { saveProductImage } from '../services/imageStorage'
+import { requireAdmin } from "../middleware/requireAdmin";
+import { uploadProductImage } from "../middleware/uploadProductImage";
+import { createProductSchema } from "../schemas/productSchema";
+import { saveProductImage } from "../services/imageStorage";
 import {
   createProduct,
   getProduct,
   updateProduct,
   deleteProduct,
-} from '../services/products'
+  listProductsByAdmin,
+} from "../services/products";
 
-export const adminProductsRouter = Router()
+export const adminProductsRouter = Router();
+/**
+ * List Products
+ */
+
+adminProductsRouter.get("/", requireAdmin, async (req, res, next) => {
+  try {
+    if (!req.admin) {
+      return res.status(401).json({
+        message: "Admin session missing.",
+      });
+    }
+
+    const products = await listProductsByAdmin(req.admin.uid);
+
+    return res.json(products);
+  } catch (error) {
+    next(error);
+  }
+});
 
 /**
  * Create Product
  */
 adminProductsRouter.post(
-  '/',
+  "/",
   requireAdmin,
-  uploadProductImage.single('image'),
+  uploadProductImage.single("image"),
   async (req, res, next) => {
     try {
       if (!req.file) {
         return res.status(400).json({
-          message: 'Product image is required.',
-        })
+          message: "Product image is required.",
+        });
       }
 
       if (!req.admin) {
         return res.status(401).json({
-          message: 'Admin session missing.',
-        })
+          message: "Admin session missing.",
+        });
       }
 
-      const input = createProductSchema.parse(req.body)
+      const input = createProductSchema.parse(req.body);
 
-      const image = await saveProductImage(req.file, input.name)
+      const image = await saveProductImage(req.file, input.name);
 
-      const product = await createProduct(
-        input,
-        image,
-        req.admin
-      )
+      const product = await createProduct(input, image, req.admin);
 
-      return res.status(201).json(product)
+      return res.status(201).json(product);
     } catch (error) {
-      next(error)
+      next(error);
     }
-  }
-)
+  },
+);
 
 /**
  * Update Product
  */
 adminProductsRouter.patch(
-  '/:id',
+  "/:id",
   requireAdmin,
-  uploadProductImage.single('image'),
+  uploadProductImage.single("image"),
   async (req, res, next) => {
     try {
       const id = Array.isArray(req.params.id)
         ? req.params.id[0]
-        : req.params.id
+        : req.params.id;
 
-      const existing = await getProduct(id)
+      const existing = await getProduct(id);
 
       if (!existing) {
         return res.status(404).json({
-          message: 'Product not found.',
-        })
+          message: "Product not found.",
+        });
       }
 
       let image = {
         imageUrl: existing.imageUrl,
         imagePath: existing.imagePath,
-      }
+      };
 
       if (req.file) {
         image = await saveProductImage(
           req.file,
-          req.body.name || existing.name
-        )
+          req.body.name || existing.name,
+        );
       }
 
       if (!req.admin) {
         return res.status(401).json({
-          message: 'Admin session missing.',
-        })
+          message: "Admin session missing.",
+        });
       }
 
       const updated = await updateProduct(
@@ -97,41 +113,35 @@ adminProductsRouter.patch(
           imageUrl: image.imageUrl,
           imagePath: image.imagePath,
         },
-        req.admin.uid
-      )
+        req.admin.uid,
+      );
 
-      return res.json(updated)
+      return res.json(updated);
     } catch (error) {
-      next(error)
+      next(error);
     }
-  }
-)
+  },
+);
 
 /**
  * Delete Product
  */
-adminProductsRouter.delete(
-  '/:id',
-  requireAdmin,
-  async (req, res, next) => {
-    try {
-      const id = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id
+adminProductsRouter.delete("/:id", requireAdmin, async (req, res, next) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
-      if (!req.admin) {
-        return res.status(401).json({
-          message: 'Admin session missing.',
-        })
-      }
-
-      await deleteProduct(id, req.admin.uid)
-
-      return res.json({
-        success: true,
-      })
-    } catch (error) {
-      next(error)
+    if (!req.admin) {
+      return res.status(401).json({
+        message: "Admin session missing.",
+      });
     }
+
+    await deleteProduct(id, req.admin.uid);
+
+    return res.json({
+      success: true,
+    });
+  } catch (error) {
+    next(error);
   }
-)
+});

@@ -96,7 +96,19 @@ export async function createProduct(
   return product;
 }
 
-export async function listProducts(adminUid: string) {
+export async function listProducts() {
+  const snapshot = await productsRef().once("value");
+
+  const value = snapshot.val() as Record<string, Product> | null;
+
+  if (!value) return [];
+
+  return Object.values(value).sort((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
+  );
+}
+
+export async function listProductsByAdmin(adminUid: string) {
   const snapshot = await productsRef().once("value");
 
   const value = snapshot.val() as Record<string, Product> | null;
